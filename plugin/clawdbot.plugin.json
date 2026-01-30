@@ -50,7 +50,7 @@
         "description": "How often to poll for commands (ms)"
       }
     },
-    "required": ["token"]
+    "required": []
   },
   "uiHints": {
     "url": { "label": "MoltGuard URL", "placeholder": "https://guard.moltnet.ai" },

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
+import { createHash, randomBytes } from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3457;
@@ -131,6 +132,20 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_traces_agent ON traces(agent);
   CREATE INDEX IF NOT EXISTS idx_commands_agent ON commands(agent);
   CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
+  
+  -- Users table for authentication
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    api_token TEXT UNIQUE NOT NULL,
+    created_at TEXT NOT NULL,
+    last_login TEXT,
+    plan TEXT DEFAULT 'free'
+  );
+  
+  CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  CREATE INDEX IF NOT EXISTS idx_users_token ON users(api_token);
 `);
 
 // Migrations
@@ -432,6 +447,122 @@ function scanSkillContent(content, url = null) {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0', timestamp: new Date().toISOString() });
+});
+
+// ============= USER AUTHENTICATION =============
+
+// Helper: hash password
+function hashPassword(password) {
+  return createHash('sha256').update(password + 'moltguard_salt_2026').digest('hex');
+}
+
+// Helper: generate API token
+function generateToken() {
+  return 'mg_' + randomBytes(24).toString('hex');
+}
+
+// Signup
+app.post('/api/signup', async (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password required' });
+  }
+  
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  
+  // Check if email exists
+  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  if (existing) {
+    return res.status(400).json({ error: 'Email already registered' });
+  }
+  
+  const id = nanoid();
+  const passwordHash = hashPassword(password);
+  const apiToken = generateToken();
+  const now = new Date().toISOString();
+  
+  try {
+    db.prepare(`
+      INSERT INTO users (id, email, password_hash, api_token, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(id, email, passwordHash, apiToken, now);
+    
+    res.json({
+      success: true,
+      token: apiToken,
+      message: 'Account created! Save your token - it won\'t be shown again.'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create account' });
+  }
+});
+
+// Login
+app.post('/api/login', (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password required' });
+  }
+  
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  
+  if (!user || user.password_hash !== hashPassword(password)) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+  
+  // Update last login
+  db.prepare('UPDATE users SET last_login = ? WHERE id = ?').run(new Date().toISOString(), user.id);
+  
+  res.json({
+    success: true,
+    token: user.api_token,
+    email: user.email
+  });
+});
+
+// Regenerate token (requires current token)
+app.post('/api/token/regenerate', (req, res) => {
+  const token = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Token required' });
+  }
+  
+  const user = db.prepare('SELECT * FROM users WHERE api_token = ?').get(token);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  
+  const newToken = generateToken();
+  db.prepare('UPDATE users SET api_token = ? WHERE id = ?').run(newToken, user.id);
+  
+  res.json({
+    success: true,
+    token: newToken,
+    message: 'Token regenerated. Save your new token - it won\'t be shown again.'
+  });
+});
+
+// Get current user (validate token)
+app.get('/api/me', (req, res) => {
+  const token = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Token required' });
+  }
+  
+  const user = db.prepare('SELECT id, email, created_at, last_login, plan FROM users WHERE api_token = ?').get(token);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  
+  res.json(user);
 });
 
 // ============= AGENT MANAGEMENT =============
@@ -3851,6 +3982,457 @@ app.get('/compare', (req, res) => {
             : '<span style="color: var(--accent);">🏆 ' + (winner === 'skill1' ? (s1.skillName || 'Skill A') : (s2.skillName || 'Skill B')) + ' is ' + data.comparison.scoreDiff + ' points safer</span>'
           ) +
         '</div>';
+    }
+  </script>
+</body>
+</html>`);
+});
+
+// Signup page
+app.get('/signup', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — MoltGuard</title>
+  ${STYLES}
+  <style>
+    .auth-container {
+      max-width: 420px;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+    .auth-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      padding: 40px;
+    }
+    .auth-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .auth-subtitle {
+      text-align: center;
+      color: var(--text-2);
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-1);
+      font-size: 13px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      color: var(--text-0);
+      font-size: 14px;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: var(--bg-0);
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .auth-btn:hover {
+      opacity: 0.9;
+    }
+    .auth-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .auth-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .auth-footer a {
+      color: var(--accent);
+    }
+    .token-display {
+      display: none;
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--bg-2);
+      border: 1px solid var(--accent);
+    }
+    .token-display.show {
+      display: block;
+    }
+    .token-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      word-break: break-all;
+      padding: 12px;
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      margin: 12px 0;
+    }
+    .token-warning {
+      color: var(--warning);
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    .copy-btn {
+      padding: 8px 16px;
+      background: var(--accent);
+      color: var(--bg-0);
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .error-msg {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+    .error-msg.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <a href="/" class="logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">Molt<span>Guard</span></span>
+      </a>
+      <nav class="nav">
+        <a href="/">Home</a>
+        <a href="/docs">Docs</a>
+      </nav>
+    </header>
+    
+    <div class="auth-container">
+      <div class="auth-card">
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-subtitle">Get your API token to connect your agent</p>
+        
+        <form id="signup-form">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Min 6 characters" minlength="6">
+          </div>
+          <button type="submit" class="auth-btn" id="submit-btn">Create Account & Get Token</button>
+          <div class="error-msg" id="error-msg"></div>
+        </form>
+        
+        <div class="token-display" id="token-display">
+          <h3 style="margin: 0 0 8px; color: var(--accent);">🎉 Your API Token</h3>
+          <p style="font-size: 13px; color: var(--text-2); margin: 0 0 12px;">Use this in your Clawdbot config:</p>
+          <div class="token-value" id="token-value"></div>
+          <button class="copy-btn" onclick="copyToken()">📋 Copy Token</button>
+          <p class="token-warning">⚠️ Save this token now! It won't be shown again.</p>
+          
+          <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+            <p style="font-size: 13px; color: var(--text-2); margin: 0 0 12px;">Quick setup:</p>
+            <div class="terminal" style="font-size: 12px; padding: 12px;">
+              <span class="prompt">$</span> clawdbot guard setup<br>
+              <span style="color: var(--text-2);"># Then paste your token when prompted</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="auth-footer">
+          Already have an account? <a href="/login">Log in</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const form = document.getElementById('signup-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const errorMsg = document.getElementById('error-msg');
+    const tokenDisplay = document.getElementById('token-display');
+    const tokenValue = document.getElementById('token-value');
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account...';
+      errorMsg.classList.remove('show');
+      
+      try {
+        const res = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Signup failed');
+        }
+        
+        // Show token
+        form.style.display = 'none';
+        tokenValue.textContent = data.token;
+        tokenDisplay.classList.add('show');
+        
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.classList.add('show');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account & Get Token';
+      }
+    });
+    
+    function copyToken() {
+      const token = tokenValue.textContent;
+      navigator.clipboard.writeText(token).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy Token'; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>`);
+});
+
+// Login page
+app.get('/login', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In — MoltGuard</title>
+  ${STYLES}
+  <style>
+    .auth-container {
+      max-width: 420px;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+    .auth-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      padding: 40px;
+    }
+    .auth-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .auth-subtitle {
+      text-align: center;
+      color: var(--text-2);
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-1);
+      font-size: 13px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      color: var(--text-0);
+      font-size: 14px;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: var(--bg-0);
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .auth-btn:hover {
+      opacity: 0.9;
+    }
+    .auth-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .auth-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .auth-footer a {
+      color: var(--accent);
+    }
+    .token-display {
+      display: none;
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--bg-2);
+      border: 1px solid var(--accent);
+    }
+    .token-display.show {
+      display: block;
+    }
+    .token-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      word-break: break-all;
+      padding: 12px;
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      margin: 12px 0;
+    }
+    .copy-btn {
+      padding: 8px 16px;
+      background: var(--accent);
+      color: var(--bg-0);
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .error-msg {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+    .error-msg.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <a href="/" class="logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">Molt<span>Guard</span></span>
+      </a>
+      <nav class="nav">
+        <a href="/">Home</a>
+        <a href="/docs">Docs</a>
+      </nav>
+    </header>
+    
+    <div class="auth-container">
+      <div class="auth-card">
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Log in to view your API token</p>
+        
+        <form id="login-form">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Your password">
+          </div>
+          <button type="submit" class="auth-btn" id="submit-btn">Log In</button>
+          <div class="error-msg" id="error-msg"></div>
+        </form>
+        
+        <div class="token-display" id="token-display">
+          <h3 style="margin: 0 0 8px; color: var(--accent);">Your API Token</h3>
+          <div class="token-value" id="token-value"></div>
+          <button class="copy-btn" onclick="copyToken()">📋 Copy Token</button>
+        </div>
+        
+        <div class="auth-footer">
+          Don't have an account? <a href="/signup">Sign up</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const form = document.getElementById('login-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const errorMsg = document.getElementById('error-msg');
+    const tokenDisplay = document.getElementById('token-display');
+    const tokenValue = document.getElementById('token-value');
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+      errorMsg.classList.remove('show');
+      
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+        
+        // Show token
+        form.style.display = 'none';
+        tokenValue.textContent = data.token;
+        tokenDisplay.classList.add('show');
+        
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.classList.add('show');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log In';
+      }
+    });
+    
+    function copyToken() {
+      const token = tokenValue.textContent;
+      navigator.clipboard.writeText(token).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy Token'; }, 2000);
+      });
     }
   </script>
 </body>

@@ -252,7 +252,9 @@ const register: PluginRegisterFn = (api: PluginAPI) => {
   const config = api.config.plugins?.entries?.guard?.config as MoltGuardConfig | undefined;
   
   if (!config?.token) {
-    console.log('[moltguard] No token configured. Get one at https://guard.moltnet.ai');
+    console.log('[moltguard] No token configured.');
+    console.log('[moltguard] 👉 Get your token: https://guard.moltnet.ai/signup');
+    console.log('[moltguard] Then add to config: plugins.entries.guard.config.token');
     return;
   }
 
