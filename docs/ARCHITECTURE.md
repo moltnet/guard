@@ -298,7 +298,7 @@ MoltGuard is the security layer for the AI agent ecosystem. As autonomous agents
 
 **Usage:**
 ```markdown
-![MoltGuard Scan](http://82.112.226.62:3457/api/badge?url=YOUR_SKILL_URL)
+![MoltGuard Scan](https://guard.moltnet.ai/api/badge?url=YOUR_SKILL_URL)
 ```
 
 **Badge Variants:**
@@ -489,7 +489,7 @@ for (const cmd of commands) {
 ## 🚀 Deployment
 
 **Current Production:**
-- **URL:** http://82.112.226.62:3457
+- **URL:** https://guard.moltnet.ai
 - **Service:** systemd (`moltguard.service`)
 - **Database:** `~/.moltguard/moltguard.db`
 - **Port:** 3457

@@ -6,7 +6,7 @@ Complete visibility and control over your AI agents. See what they're thinking, 
 
 ## 🌐 Live Demo
 
-**[http://82.112.226.62:3457](http://82.112.226.62:3457)**
+**[https://guard.moltnet.ai](https://guard.moltnet.ai)**
 
 ## ✨ Features
 
@@ -50,7 +50,7 @@ Complete action history:
 ### 🏷️ Badges
 Show skill safety in your README:
 ```markdown
-![MoltGuard](http://82.112.226.62:3457/api/badge?url=YOUR_SKILL_URL)
+![MoltGuard](https://guard.moltnet.ai/api/badge?url=YOUR_SKILL_URL)
 ```
 
 ## 📄 Pages
@@ -98,14 +98,14 @@ Show skill safety in your README:
 
 1. **Register your agent:**
 ```bash
-curl -X POST http://82.112.226.62:3457/api/agents/register \
+curl -X POST https://guard.moltnet.ai/api/agents/register \
   -H "Content-Type: application/json" \
   -d '{"name": "my-agent", "description": "My AI assistant"}'
 ```
 
 2. **Log your thoughts:**
 ```bash
-curl -X POST http://82.112.226.62:3457/api/traces \
+curl -X POST https://guard.moltnet.ai/api/traces \
   -H "Content-Type: application/json" \
   -d '{
     "agent": "my-agent",
@@ -117,7 +117,7 @@ curl -X POST http://82.112.226.62:3457/api/traces \
 
 3. **Request approval for risky actions:**
 ```bash
-curl -X POST http://82.112.226.62:3457/api/actions \
+curl -X POST https://guard.moltnet.ai/api/actions \
   -H "Content-Type: application/json" \
   -d '{
     "agent": "my-agent",
@@ -130,12 +130,12 @@ curl -X POST http://82.112.226.62:3457/api/actions \
 
 4. **Check for control commands:**
 ```bash
-curl http://82.112.226.62:3457/api/control/my-agent/pending
+curl https://guard.moltnet.ai/api/control/my-agent/pending
 ```
 
 ### For Humans
 
-1. Open http://82.112.226.62:3457
+1. Open https://guard.moltnet.ai
 2. View your agent's activity in the Dashboard
 3. See their thinking in Mind Graph
 4. Control them from Remote Control
@@ -143,7 +143,7 @@ curl http://82.112.226.62:3457/api/control/my-agent/pending
 ## 🔧 Self-Hosting
 
 ```bash
-git clone https://github.com/rohansx/moltguard
+git clone https://github.com/moltnet/guard
 cd moltguard
 npm install
 npm start
