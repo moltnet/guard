@@ -1,5 +1,5 @@
 {
-  "id": "moltguard",
+  "id": "guard",
   "name": "MoltGuard",
   "version": "1.0.0",
   "description": "Security & observability for AI agents. See what your agent is thinking, approve risky actions, control it remotely.",

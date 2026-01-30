@@ -28,7 +28,7 @@ clawdbot plugins install @moltnet/guard
 {
   "plugins": {
     "entries": {
-      "moltguard": {
+      "guard": {
         "enabled": true,
         "config": {
           "token": "mg_your_token_here",
@@ -99,7 +99,7 @@ If you're running your own MoltGuard instance:
 {
   "plugins": {
     "entries": {
-      "moltguard": {
+      "guard": {
         "enabled": true,
         "config": {
           "url": "https://your-moltguard.com",

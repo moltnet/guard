@@ -249,7 +249,7 @@ function getToolRisk(toolName: string, params: Record<string, unknown>): 'low' |
 }
 
 const register: PluginRegisterFn = (api: PluginAPI) => {
-  const config = api.config.plugins?.entries?.moltguard?.config as MoltGuardConfig | undefined;
+  const config = api.config.plugins?.entries?.guard?.config as MoltGuardConfig | undefined;
   
   if (!config?.token) {
     console.log('[moltguard] No token configured. Get one at https://guard.moltnet.ai');
