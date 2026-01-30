@@ -1,0 +1,16 @@
+{
+  "name": "moltguard",
+  "version": "1.0.0",
+  "description": "Security & observability platform for AI agents",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.4.3",
+    "nanoid": "^5.0.4"
+  }
+}
