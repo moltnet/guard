@@ -2280,111 +2280,103 @@ app.get('/', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MoltGuard — Security for AI Agents</title>
-  <meta name="description" content="Scan skills, audit actions, control your AI agent. The security layer for the Moltbot ecosystem.">
-  <meta property="og:title" content="MoltGuard — Security for AI Agents">
-  <meta property="og:description" content="Scan skills for malicious patterns. Audit every action. Approve or block risky operations. The trust layer for AI agents.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="${req.protocol}://${req.get('host')}">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="MoltGuard — Security for AI Agents">
-  <meta name="twitter:description" content="Scan skills. Audit actions. Control your AI agent.">
+  <title>MoltGuard — Security Plugin for Clawdbot</title>
+  <meta name="description" content="Security & observability plugin for Clawdbot AI agents. One command to install.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
   ${STYLES}
   <style>
     .hero {
       text-align: center;
-      padding: 80px 20px;
-      border-bottom: 1px solid var(--border);
+      padding: 100px 20px 80px;
     }
-    
+    .badge-plugin {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--bg-0);
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
     .hero-title {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 48px;
+      font-size: 56px;
       font-weight: 700;
       color: var(--text-0);
       margin-bottom: 16px;
+      line-height: 1.1;
     }
-    
     .hero-title span { color: var(--accent); }
-    
     .hero-subtitle {
-      font-size: 18px;
+      font-size: 20px;
       color: var(--text-2);
-      max-width: 600px;
-      margin: 0 auto 32px;
+      max-width: 500px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
     }
-    
-    .hero-cta {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    
-    .hero-cta .btn {
-      padding: 14px 32px;
-      font-size: 15px;
-    }
-    
-    .features {
-      padding: 80px 0;
-    }
-    
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-    }
-    
-    .feature {
+    .install-command {
       background: var(--bg-1);
-      border: 1px solid var(--border);
-      padding: 32px;
-    }
-    
-    .feature-icon {
-      font-size: 32px;
+      border: 2px solid var(--accent);
+      padding: 20px 32px;
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      color: var(--accent);
       margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    
+    .install-command:hover {
+      background: var(--accent);
+      color: var(--bg-0);
+    }
+    .install-hint {
+      font-size: 13px;
+      color: var(--text-3);
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin: 60px 0;
+    }
+    .feature {
+      background: var(--bg-0);
+      padding: 32px;
+      text-align: center;
+    }
+    .feature-icon { font-size: 28px; margin-bottom: 12px; }
     .feature-title {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 600;
       color: var(--text-0);
       margin-bottom: 8px;
     }
-    
     .feature-desc {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-2);
+      line-height: 1.5;
     }
-    
-    .cta-section {
-      text-align: center;
-      padding: 80px 20px;
-      border-top: 1px solid var(--border);
+    .cta-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 40px;
     }
-    
-    .cta-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 32px;
-      color: var(--text-0);
-      margin-bottom: 24px;
-    }
-    
-    .install-box {
-      max-width: 700px;
-      margin: 0 auto;
-    }
-    
     .footer {
       border-top: 1px solid var(--border);
-      padding: 32px 0;
+      padding: 40px 0;
       text-align: center;
       color: var(--text-3);
       font-size: 13px;
+    }
+    @media (max-width: 768px) {
+      .features { grid-template-columns: 1fr; }
+      .hero-title { font-size: 36px; }
     }
   </style>
 </head>
@@ -2397,8 +2389,6 @@ app.get('/', (req, res) => {
       </div>
       <nav class="nav">
         <a href="/dashboard">Dashboard</a>
-        <a href="/mind-graph">Mind Graph</a>
-        <a href="/control">Control</a>
         <a href="/scan">Scan</a>
         <a href="/docs">Docs</a>
         <a href="https://github.com/moltnet/guard" target="_blank">GitHub</a>
@@ -2406,265 +2396,93 @@ app.get('/', (req, res) => {
     </header>
     
     <section class="hero">
-      <pre class="ascii-header">
-███╗   ███╗ ██████╗ ██╗  ████████╗ ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗ 
-████╗ ████║██╔═══██╗██║  ╚══██╔══╝██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗
-██╔████╔██║██║   ██║██║     ██║   ██║  ███╗██║   ██║███████║██████╔╝██║  ██║
-██║╚██╔╝██║██║   ██║██║     ██║   ██║   ██║██║   ██║██╔══██║██╔══██╗██║  ██║
-██║ ╚═╝ ██║╚██████╔╝███████╗██║   ╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝
-╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝    ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ 
-      </pre>
-      <h1 class="hero-title">Security for <span>AI Agents</span></h1>
+      <div class="badge-plugin">CLAWDBOT PLUGIN</div>
+      <h1 class="hero-title">Security for your<br><span>AI Agent</span></h1>
       <p class="hero-subtitle">
-        Scan skills before you install. Audit every action. Approve or block risky operations.
-        The trust layer for the Moltbot ecosystem.
+        See what your agent is thinking. Approve risky actions. Stop it when needed. One command to install.
       </p>
-      <div style="max-width: 500px; margin: 0 auto 32px;">
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="quick-scan-url" placeholder="https://example.com/skill.md" style="flex: 1; padding: 14px;">
-          <button class="btn btn-primary" style="padding: 14px 24px;" onclick="quickScan()">Scan →</button>
-        </div>
-      </div>
-      <div class="hero-cta">
-        <a href="/scan" class="btn">Advanced Scanner</a>
-        <a href="/compare" class="btn">Compare Skills</a>
-        <a href="/dashboard" class="btn">Dashboard</a>
-      </div>
       
-      <script>
-        async function quickScan() {
-          const url = document.getElementById('quick-scan-url').value.trim();
-          if (!url) { alert('Enter a skill URL'); return; }
-          
-          const btn = event.target;
-          btn.disabled = true;
-          btn.textContent = 'Scanning...';
-          
-          try {
-            const res = await fetch('/api/scan', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ url })
-            });
-            const data = await res.json();
-            if (data.id) {
-              window.location.href = '/scan/' + data.id;
-            } else {
-              alert('Scan failed: ' + (data.error || 'Unknown error'));
-              btn.disabled = false;
-              btn.textContent = 'Scan →';
-            }
-          } catch (e) {
-            alert('Scan failed: ' + e.message);
-            btn.disabled = false;
-            btn.textContent = 'Scan →';
-          }
-        }
-        
-        document.getElementById('quick-scan-url').addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') quickScan();
-        });
-      </script>
-    </section>
-    
-    <section class="features">
-      <div class="features-grid">
-        <div class="feature">
-          <div class="feature-icon">🔍</div>
-          <h3 class="feature-title">SkillScan</h3>
-          <p class="feature-desc">
-            Analyze skills before installation. Detect malicious patterns, suspicious URLs, 
-            credential access, obfuscated code, and more. Know what you're installing.
-          </p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">✋</div>
-          <h3 class="feature-title">Intent Gating</h3>
-          <p class="feature-desc">
-            Require approval for high-risk actions. Your agent asks permission before 
-            sending emails, deleting files, or making purchases. You stay in control.
-          </p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">📋</div>
-          <h3 class="feature-title">Audit Log</h3>
-          <p class="feature-desc">
-            Every action your agent takes is logged. Search, filter, export. 
-            Full visibility into what your AI is doing and why.
-          </p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">↩️</div>
-          <h3 class="feature-title">Undo System</h3>
-          <p class="feature-desc">
-            Made a mistake? Reversible actions can be undone. MoltGuard tracks what 
-            can be reverted and helps you roll back.
-          </p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">💰</div>
-          <h3 class="feature-title">Cost Tracking</h3>
-          <p class="feature-desc">
-            Monitor API costs, token usage, and spending per agent. Set budgets, 
-            get alerts. No more surprise bills.
-          </p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">🔔</div>
-          <h3 class="feature-title">Alerts</h3>
-          <p class="feature-desc">
-            Get notified on Telegram when actions need approval or something 
-            critical happens. Stay informed without babysitting.
-          </p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">🧠</div>
-          <h3 class="feature-title">Mind Graph</h3>
-          <p class="feature-desc">
-            Visualize your agent's thought process in real-time. See the reasoning 
-            chain, decisions made, and how it arrived at each action.
-          </p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">🎮</div>
-          <h3 class="feature-title">Remote Control</h3>
-          <p class="feature-desc">
-            Pause, resume, or emergency stop your agent from anywhere. 
-            Full control over your AI assistant when you need it.
-          </p>
-        </div>
+      <div class="install-command" onclick="copyInstall()">
+        clawdbot plugins install @moltnet/guard
+      </div>
+      <div class="install-hint">Click to copy • Then restart your gateway</div>
+      
+      <div class="cta-row">
+        <a href="/docs" class="btn btn-primary">Read the Docs</a>
+        <a href="/dashboard" class="btn">Open Dashboard</a>
+        <a href="https://github.com/moltnet/guard" class="btn">View Source</a>
       </div>
     </section>
     
-    <section class="features" style="border-top: 1px solid var(--border);">
-      <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; text-align: center; margin-bottom: 48px;">How It Works</h2>
-      <div class="features-grid" style="grid-template-columns: repeat(4, 1fr);">
-        <div class="feature" style="text-align: center;">
-          <div class="feature-icon">1️⃣</div>
-          <h3 class="feature-title">Install Plugin</h3>
-          <p class="feature-desc">
-            Run <code style="background: var(--bg-2); padding: 2px 6px;">clawdbot plugins install @moltnet/guard</code> 
-            and add your token. One minute setup.
-          </p>
-        </div>
-        <div class="feature" style="text-align: center;">
-          <div class="feature-icon">2️⃣</div>
-          <h3 class="feature-title">Automatic Logging</h3>
-          <p class="feature-desc">
-            Every tool call is captured. Thoughts are logged to Mind Graph.
-            High-risk actions wait for your approval.
-          </p>
-        </div>
-        <div class="feature" style="text-align: center;">
-          <div class="feature-icon">3️⃣</div>
-          <h3 class="feature-title">Approve or Block</h3>
-          <p class="feature-desc">
-            Review pending actions in the dashboard or via Telegram.
-            Approve, reject, or let them timeout.
-          </p>
-        </div>
-        <div class="feature" style="text-align: center;">
-          <div class="feature-icon">4️⃣</div>
-          <h3 class="feature-title">Full Control</h3>
-          <p class="feature-desc">
-            Pause, resume, or stop your agent remotely.
-            Complete audit trail for every action.
-          </p>
-        </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🧠</div>
+        <h3 class="feature-title">Mind Graph</h3>
+        <p class="feature-desc">See your agent's reasoning in real-time</p>
       </div>
-    </section>
-    
-    <section class="cta-section">
-      <h2 class="cta-title">Connect Your Agent</h2>
-      <p style="color: var(--text-2); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto;">
-        One command to add security & observability to your Clawdbot agent.
-      </p>
-      <div class="install-box">
-        <div class="terminal" style="text-align: left;">
-          <span class="comment"># Install the MoltGuard plugin</span><br>
-          <span class="prompt">$</span> clawdbot plugins install @moltnet/guard<br><br>
-          <span class="comment"># Add your token to config (~/.clawdbot/config.json)</span><br>
-          <span class="string">{</span><br>
-          &nbsp;&nbsp;<span class="string">"plugins"</span>: {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"entries"</span>: {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"moltguard"</span>: {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"enabled"</span>: <span class="keyword">true</span>,<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"config"</span>: {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"token"</span>: <span class="string">"YOUR_TOKEN"</span><br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;}<br>
-          &nbsp;&nbsp;}<br>
-          <span class="string">}</span><br><br>
-          <span class="comment"># Restart and you're connected!</span><br>
-          <span class="prompt">$</span> clawdbot gateway restart
-        </div>
+      <div class="feature">
+        <div class="feature-icon">✋</div>
+        <h3 class="feature-title">Intent Gating</h3>
+        <p class="feature-desc">Approve high-risk actions before they run</p>
       </div>
-      <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-        <a href="/docs" class="btn btn-primary" style="padding: 14px 32px;">View Documentation</a>
-        <a href="/dashboard" class="btn" style="padding: 14px 32px;">Open Dashboard</a>
-        <a href="/scan" class="btn" style="padding: 14px 32px;">Try Scanner</a>
+      <div class="feature">
+        <div class="feature-icon">🎮</div>
+        <h3 class="feature-title">Remote Control</h3>
+        <p class="feature-desc">Pause, resume, or stop from anywhere</p>
       </div>
-    </section>
-    
-    <section style="padding: 40px 0;">
-      <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 20px; margin-bottom: 24px; text-align: center;">Recent Scans</h3>
-      <div id="recent-scans-home" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; max-width: 800px; margin: 0 auto;"></div>
-      <script>
-        fetch('/api/scans?limit=4').then(r => r.json()).then(scans => {
-          if (scans.length === 0) {
-            document.getElementById('recent-scans-home').innerHTML = '<p style="text-align: center; color: var(--text-3); grid-column: 1/-1;">No scans yet. Be the first!</p>';
-            return;
-          }
-          document.getElementById('recent-scans-home').innerHTML = scans.map(s => {
-            const riskClass = s.safe ? 'safe' : s.risk_score >= 70 ? 'critical' : s.risk_score >= 45 ? 'high' : 'medium';
-            return '<a href="/scan/' + s.id + '" style="background: var(--bg-1); border: 1px solid var(--border); padding: 16px; text-decoration: none; display: block;">' +
-              '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
-                '<span style="color: var(--text-0); font-weight: 500;">' + (s.skill_name || 'Unknown') + '</span>' +
-                '<span class="badge badge-' + riskClass + '">' + (s.safe ? 'safe' : riskClass) + '</span>' +
-              '</div>' +
-              '<div style="font-size: 12px; color: var(--text-3);">Score: ' + s.risk_score + '/100</div>' +
-            '</a>';
-          }).join('');
-        });
-      </script>
-    </section>
-    
-    <section style="padding: 60px 0; text-align: center;">
-      <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 20px; margin-bottom: 24px; color: var(--text-2);">Platform Stats</h3>
-      <div id="live-stats" style="display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;">
-        <div>
-          <div style="font-size: 36px; font-weight: 700; color: var(--accent);" id="stat-scans-home">—</div>
-          <div style="font-size: 13px; color: var(--text-3);">Skills Scanned</div>
-        </div>
-        <div>
-          <div style="font-size: 36px; font-weight: 700; color: var(--text-0);" id="stat-actions-home">—</div>
-          <div style="font-size: 13px; color: var(--text-3);">Actions Logged</div>
-        </div>
-        <div>
-          <div style="font-size: 36px; font-weight: 700; color: var(--danger);" id="stat-threats-home">—</div>
-          <div style="font-size: 13px; color: var(--text-3);">Threats Detected</div>
-        </div>
+      <div class="feature">
+        <div class="feature-icon">📋</div>
+        <h3 class="feature-title">Audit Log</h3>
+        <p class="feature-desc">Every action logged with full context</p>
       </div>
-    </section>
+      <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <h3 class="feature-title">Skill Scanner</h3>
+        <p class="feature-desc">Check skills for malicious code</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">💰</div>
+        <h3 class="feature-title">Cost Tracking</h3>
+        <p class="feature-desc">Monitor tokens and spending</p>
+      </div>
+    </div>
     
-    <script>
-      fetch('/api/stats').then(r => r.json()).then(s => {
-        document.getElementById('stat-scans-home').textContent = s.scans.total;
-        document.getElementById('stat-actions-home').textContent = s.actions.total;
-        document.getElementById('stat-threats-home').textContent = s.scans.unsafe;
-      });
-    </script>
+    <div style="text-align: center; padding: 40px 0;">
+      <p style="color: var(--text-2); margin-bottom: 24px;">Works with self-hosted MoltGuard or our hosted version</p>
+      <div class="terminal" style="max-width: 500px; margin: 0 auto; text-align: left; padding: 24px;">
+        <span class="comment"># Install</span><br>
+        <span class="prompt">$</span> clawdbot plugins install @moltnet/guard<br><br>
+        <span class="comment"># Restart</span><br>
+        <span class="prompt">$</span> clawdbot gateway restart<br><br>
+        <span style="color: var(--accent);"># That's it! Token auto-generated.</span>
+      </div>
+    </div>
     
     <footer class="footer">
       <p>MoltGuard — Open source security for AI agents</p>
       <p style="margin-top: 8px;">
         <a href="https://github.com/moltnet/guard">GitHub</a> · 
-        <a href="/dashboard">Dashboard</a> · 
-        <a href="/scan">Scanner</a>
+        <a href="/docs">Docs</a> · 
+        <a href="https://npmjs.com/package/@moltnet/guard">npm</a>
       </p>
     </footer>
   </div>
+  
+  <script>
+    function copyInstall() {
+      navigator.clipboard.writeText('clawdbot plugins install @moltnet/guard');
+      const el = document.querySelector('.install-command');
+      const orig = el.textContent;
+      el.textContent = '✓ Copied!';
+      el.style.background = 'var(--accent)';
+      el.style.color = 'var(--bg-0)';
+      setTimeout(() => {
+        el.textContent = orig;
+        el.style.background = '';
+        el.style.color = '';
+      }, 1500);
+    }
+  </script>
 </body>
 </html>`);
 });
