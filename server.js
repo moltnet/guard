@@ -2225,11 +2225,11 @@ app.get('/', (req, res) => {
       </div>
       <nav class="nav">
         <a href="/dashboard">Dashboard</a>
+        <a href="/mind-graph">Mind Graph</a>
+        <a href="/control">Control</a>
         <a href="/scan">Scan</a>
-        <a href="/batch">Batch</a>
-        <a href="/compare">Compare</a>
-        <a href="/docs">API</a>
-        <a href="https://github.com/rohansx/moltguard" target="_blank">GitHub</a>
+        <a href="/docs">Docs</a>
+        <a href="https://github.com/moltnet/guard" target="_blank">GitHub</a>
       </nav>
     </header>
     
@@ -2345,58 +2345,93 @@ app.get('/', (req, res) => {
             critical happens. Stay informed without babysitting.
           </p>
         </div>
+        <div class="feature">
+          <div class="feature-icon">🧠</div>
+          <h3 class="feature-title">Mind Graph</h3>
+          <p class="feature-desc">
+            Visualize your agent's thought process in real-time. See the reasoning 
+            chain, decisions made, and how it arrived at each action.
+          </p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎮</div>
+          <h3 class="feature-title">Remote Control</h3>
+          <p class="feature-desc">
+            Pause, resume, or emergency stop your agent from anywhere. 
+            Full control over your AI assistant when you need it.
+          </p>
+        </div>
       </div>
     </section>
     
     <section class="features" style="border-top: 1px solid var(--border);">
       <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; text-align: center; margin-bottom: 48px;">How It Works</h2>
-      <div class="features-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="features-grid" style="grid-template-columns: repeat(4, 1fr);">
         <div class="feature" style="text-align: center;">
           <div class="feature-icon">1️⃣</div>
-          <h3 class="feature-title">Scan Before Install</h3>
+          <h3 class="feature-title">Install Plugin</h3>
           <p class="feature-desc">
-            Paste a skill URL or content. MoltGuard analyzes code blocks for dangerous patterns,
-            data exfiltration, and obfuscation. Get a risk score before you install.
+            Run <code style="background: var(--bg-2); padding: 2px 6px;">clawdbot plugins install @moltnet/guard</code> 
+            and add your token. One minute setup.
           </p>
         </div>
         <div class="feature" style="text-align: center;">
           <div class="feature-icon">2️⃣</div>
-          <h3 class="feature-title">Agent Logs Actions</h3>
+          <h3 class="feature-title">Automatic Logging</h3>
           <p class="feature-desc">
-            Your agent sends actions to MoltGuard. High-risk operations go into a pending queue.
-            You approve or reject from the dashboard.
+            Every tool call is captured. Thoughts are logged to Mind Graph.
+            High-risk actions wait for your approval.
           </p>
         </div>
         <div class="feature" style="text-align: center;">
           <div class="feature-icon">3️⃣</div>
-          <h3 class="feature-title">Full Visibility</h3>
+          <h3 class="feature-title">Approve or Block</h3>
           <p class="feature-desc">
-            See everything your agent does. Filter by risk, search by type, track costs.
-            Export audit logs for compliance.
+            Review pending actions in the dashboard or via Telegram.
+            Approve, reject, or let them timeout.
+          </p>
+        </div>
+        <div class="feature" style="text-align: center;">
+          <div class="feature-icon">4️⃣</div>
+          <h3 class="feature-title">Full Control</h3>
+          <p class="feature-desc">
+            Pause, resume, or stop your agent remotely.
+            Complete audit trail for every action.
           </p>
         </div>
       </div>
     </section>
     
     <section class="cta-section">
-      <h2 class="cta-title">Get Started</h2>
+      <h2 class="cta-title">Connect Your Agent</h2>
+      <p style="color: var(--text-2); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto;">
+        One command to add security & observability to your Clawdbot agent.
+      </p>
       <div class="install-box">
-        <div class="terminal">
-          <span class="comment"># Scan a skill from the command line</span><br>
-          <span class="prompt">$</span> curl -X POST ${req.protocol}://${req.get('host')}/api/scan \\<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;-H <span class="string">"Content-Type: application/json"</span> \\<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;-d <span class="string">'{"url": "https://example.com/skill.md"}'</span><br><br>
-          <span class="comment"># Log an action from your agent</span><br>
-          <span class="prompt">$</span> curl -X POST ${req.protocol}://${req.get('host')}/api/actions \\<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;-H <span class="string">"Content-Type: application/json"</span> \\<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;-d <span class="string">'{"agent":"my-agent","type":"email.send","description":"Send email","risk":"high","status":"pending"}'</span><br><br>
-          <span class="comment"># Add a badge to your skill's README</span><br>
-          <span class="prompt">![MoltGuard](${req.protocol}://${req.get('host')}/api/badge?url=YOUR_SKILL_URL)</span>
+        <div class="terminal" style="text-align: left;">
+          <span class="comment"># Install the MoltGuard plugin</span><br>
+          <span class="prompt">$</span> clawdbot plugins install @moltnet/guard<br><br>
+          <span class="comment"># Add your token to config (~/.clawdbot/config.json)</span><br>
+          <span class="string">{</span><br>
+          &nbsp;&nbsp;<span class="string">"plugins"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"entries"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"moltguard"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"enabled"</span>: <span class="keyword">true</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"config"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"token"</span>: <span class="string">"YOUR_TOKEN"</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;}<br>
+          <span class="string">}</span><br><br>
+          <span class="comment"># Restart and you're connected!</span><br>
+          <span class="prompt">$</span> clawdbot gateway restart
         </div>
       </div>
-      <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: center;">
-        <a href="/scan" class="btn btn-primary" style="padding: 14px 32px;">Try the Scanner</a>
+      <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        <a href="/docs" class="btn btn-primary" style="padding: 14px 32px;">View Documentation</a>
         <a href="/dashboard" class="btn" style="padding: 14px 32px;">Open Dashboard</a>
+        <a href="/scan" class="btn" style="padding: 14px 32px;">Try Scanner</a>
       </div>
     </section>
     
@@ -2452,7 +2487,7 @@ app.get('/', (req, res) => {
     <footer class="footer">
       <p>MoltGuard — Open source security for AI agents</p>
       <p style="margin-top: 8px;">
-        <a href="https://github.com/rohansx/moltguard">GitHub</a> · 
+        <a href="https://github.com/moltnet/guard">GitHub</a> · 
         <a href="/dashboard">Dashboard</a> · 
         <a href="/scan">Scanner</a>
       </p>
@@ -3858,12 +3893,59 @@ app.get('/docs', (req, res) => {
       <nav class="nav">
         <a href="/">Home</a>
         <a href="/dashboard">Dashboard</a>
+        <a href="/mind-graph">Mind Graph</a>
+        <a href="/control">Control</a>
         <a href="/scan">Scan</a>
-        <a href="/docs" class="active">API Docs</a>
+        <a href="/docs" class="active">Docs</a>
       </nav>
     </header>
     
-    <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 32px; margin-bottom: 8px;">API Reference</h1>
+    <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 32px; margin-bottom: 8px;">Documentation</h1>
+    <p style="color: var(--text-2); margin-bottom: 32px;">Complete guide to integrating MoltGuard with your AI agent.</p>
+    
+    <div class="card" style="margin-bottom: 32px; border-color: var(--accent);">
+      <div class="card-header" style="background: var(--accent); color: var(--bg-0);"><span class="card-title">🚀 Quick Start — Clawdbot Plugin</span></div>
+      <div style="padding: 20px;">
+        <p style="margin-bottom: 16px; color: var(--text-1);">Connect your Clawdbot agent to MoltGuard in under a minute:</p>
+        <div class="terminal" style="margin-bottom: 16px;">
+          <span class="comment"># 1. Install the plugin</span><br>
+          <span class="prompt">$</span> clawdbot plugins install @moltnet/guard<br><br>
+          <span class="comment"># 2. Add to your config (~/.clawdbot/config.json)</span><br>
+          {<br>
+          &nbsp;&nbsp;<span class="string">"plugins"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"entries"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"moltguard"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"enabled"</span>: <span class="keyword">true</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"config"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"token"</span>: <span class="string">"YOUR_TOKEN"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"agentName"</span>: <span class="string">"my-assistant"</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;}<br>
+          }<br><br>
+          <span class="comment"># 3. Restart</span><br>
+          <span class="prompt">$</span> clawdbot gateway restart
+        </div>
+        <h4 style="margin: 20px 0 12px; color: var(--text-0);">Plugin Configuration Options</h4>
+        <table class="param-table">
+          <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+          <tr><td><span class="param-name">token</span></td><td class="param-type">string</td><td>required</td><td>Your MoltGuard API token</td></tr>
+          <tr><td><span class="param-name">url</span></td><td class="param-type">string</td><td>${baseUrl}</td><td>MoltGuard server URL</td></tr>
+          <tr><td><span class="param-name">agentName</span></td><td class="param-type">string</td><td>auto</td><td>Display name in dashboard</td></tr>
+          <tr><td><span class="param-name">logThoughts</span></td><td class="param-type">boolean</td><td>true</td><td>Send reasoning to Mind Graph</td></tr>
+          <tr><td><span class="param-name">gateHighRisk</span></td><td class="param-type">boolean</td><td>true</td><td>Require approval for high-risk actions</td></tr>
+          <tr><td><span class="param-name">gateTools</span></td><td class="param-type">string[]</td><td>["exec", "message", "write"]</td><td>Tools requiring approval</td></tr>
+          <tr><td><span class="param-name">pollCommands</span></td><td class="param-type">boolean</td><td>true</td><td>Enable remote control</td></tr>
+          <tr><td><span class="param-name">pollIntervalMs</span></td><td class="param-type">number</td><td>5000</td><td>Command poll interval</td></tr>
+        </table>
+        <p style="margin-top: 16px; color: var(--text-2); font-size: 13px;">
+          📦 Plugin source: <a href="https://github.com/moltnet/guard/tree/master/plugin" style="color: var(--accent);">github.com/moltnet/guard/plugin</a>
+        </p>
+      </div>
+    </div>
+    
+    <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 24px; margin: 32px 0 16px;">API Reference</h2>
     <p style="color: var(--text-2); margin-bottom: 32px;">Base URL: <code style="background: var(--bg-2); padding: 2px 8px;">${baseUrl}/api</code></p>
     
     <div class="card">

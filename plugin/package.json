@@ -1,0 +1,34 @@
+{
+  "name": "@moltnet/guard",
+  "version": "1.0.0",
+  "description": "MoltGuard plugin for Clawdbot - Security & observability for AI agents",
+  "main": "index.ts",
+  "type": "module",
+  "author": "MoltNet <hello@moltnet.ai>",
+  "license": "MIT",
+  "homepage": "https://guard.moltnet.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/moltnet/guard"
+  },
+  "keywords": [
+    "clawdbot",
+    "clawdbot-plugin",
+    "ai-agent",
+    "security",
+    "observability",
+    "audit",
+    "moltguard"
+  ],
+  "clawdbot": {
+    "extensions": ["./index.ts"]
+  },
+  "peerDependencies": {
+    "clawdbot": ">=0.1.0"
+  },
+  "files": [
+    "index.ts",
+    "clawdbot.plugin.json",
+    "README.md"
+  ]
+}

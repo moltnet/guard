@@ -1,0 +1,65 @@
+{
+  "id": "moltguard",
+  "name": "MoltGuard",
+  "version": "1.0.0",
+  "description": "Security & observability for AI agents. See what your agent is thinking, approve risky actions, control it remotely.",
+  "homepage": "https://guard.moltnet.ai",
+  "author": "MoltNet <hello@moltnet.ai>",
+  "license": "MIT",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "url": {
+        "type": "string",
+        "default": "https://guard.moltnet.ai",
+        "description": "MoltGuard server URL"
+      },
+      "token": {
+        "type": "string",
+        "description": "Your MoltGuard API token (get one at guard.moltnet.ai)"
+      },
+      "agentName": {
+        "type": "string",
+        "description": "Display name for this agent in MoltGuard dashboard"
+      },
+      "logThoughts": {
+        "type": "boolean",
+        "default": true,
+        "description": "Send reasoning traces to Mind Graph"
+      },
+      "gateHighRisk": {
+        "type": "boolean",
+        "default": true,
+        "description": "Require approval for high-risk actions"
+      },
+      "gateTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": ["exec", "message", "write"],
+        "description": "Tool names that require approval when gateHighRisk is enabled"
+      },
+      "pollCommands": {
+        "type": "boolean",
+        "default": true,
+        "description": "Poll for remote control commands (pause/resume/stop)"
+      },
+      "pollIntervalMs": {
+        "type": "number",
+        "default": 5000,
+        "description": "How often to poll for commands (ms)"
+      }
+    },
+    "required": ["token"]
+  },
+  "uiHints": {
+    "url": { "label": "MoltGuard URL", "placeholder": "https://guard.moltnet.ai" },
+    "token": { "label": "API Token", "sensitive": true, "placeholder": "mg_xxxxxxxxxxxx" },
+    "agentName": { "label": "Agent Name", "placeholder": "my-assistant" },
+    "logThoughts": { "label": "Log Thoughts to Mind Graph" },
+    "gateHighRisk": { "label": "Gate High-Risk Actions" },
+    "gateTools": { "label": "Tools Requiring Approval" },
+    "pollCommands": { "label": "Enable Remote Control" },
+    "pollIntervalMs": { "label": "Poll Interval (ms)" }
+  }
+}
