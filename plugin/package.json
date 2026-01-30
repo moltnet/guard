@@ -1,6 +1,6 @@
 {
   "name": "@moltnet/guard",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "MoltGuard plugin for Clawdbot - Security & observability for AI agents",
   "main": "index.ts",
   "type": "module",

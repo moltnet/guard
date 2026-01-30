@@ -343,7 +343,7 @@ const register: PluginRegisterFn = (api: PluginAPI) => {
   })();
 
   // Hook: Intercept tool results before persistence
-  api.hooks?.register('tool_result_persist', (toolResult) => {
+  api.on('tool_result_persist', (toolResult) => {
     if (!toolResult || typeof toolResult !== 'object') return toolResult;
 
     const { name, input } = toolResult as { name?: string; input?: Record<string, unknown> };
@@ -362,17 +362,17 @@ const register: PluginRegisterFn = (api: PluginAPI) => {
   });
 
   // Hook: Log agent bootstrap (session start)
-  api.hooks?.register('agent:bootstrap', (event) => {
+  api.on('agent:bootstrap', (event) => {
     if (cfg.logThoughts) {
       logTrace(cfg, agentName, state.sessionId, 'session', 'Session Started', 'Agent bootstrap initiated')
         .catch(() => {});
     }
   });
 
-  // Hook: Log commands
-  api.hooks?.register('command', (event) => {
-    if (cfg.logThoughts && event.action) {
-      logTrace(cfg, agentName, state.sessionId, 'command', `Command: /${event.action}`, `User issued /${event.action}`)
+  // Hook: Log commands  
+  api.on('command', (event) => {
+    if (cfg.logThoughts && (event as any).action) {
+      logTrace(cfg, agentName, state.sessionId, 'command', `Command: /${(event as any).action}`, `User issued /${(event as any).action}`)
         .catch(() => {});
     }
   });
