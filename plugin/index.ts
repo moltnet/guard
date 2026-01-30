@@ -9,10 +9,14 @@
  */
 
 import type { PluginAPI, PluginRegisterFn } from 'clawdbot';
+import { randomBytes } from 'crypto';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import { homedir } from 'os';
 
 interface MoltGuardConfig {
   url: string;
-  token: string;
+  token?: string;
   agentName?: string;
   logThoughts?: boolean;
   gateHighRisk?: boolean;
@@ -34,6 +38,53 @@ const state: MoltGuardState = {
   paused: false,
   pollInterval: null,
 };
+
+// Generate a new token
+function generateToken(): string {
+  return 'mg_' + randomBytes(24).toString('hex');
+}
+
+// Auto-generate and save token if not present
+function ensureToken(api: PluginAPI): string | null {
+  const configPath = join(homedir(), '.clawdbot', 'clawdbot.json');
+  
+  try {
+    if (!existsSync(configPath)) {
+      console.log('[moltguard] Config file not found');
+      return null;
+    }
+    
+    const config = JSON.parse(readFileSync(configPath, 'utf8'));
+    const guardConfig = config.plugins?.entries?.guard?.config;
+    
+    // If token exists, use it
+    if (guardConfig?.token) {
+      return guardConfig.token;
+    }
+    
+    // Generate new token
+    const newToken = generateToken();
+    console.log('[moltguard] Generated new token: ' + newToken);
+    
+    // Ensure config structure exists
+    if (!config.plugins) config.plugins = {};
+    if (!config.plugins.entries) config.plugins.entries = {};
+    if (!config.plugins.entries.guard) config.plugins.entries.guard = { enabled: true };
+    if (!config.plugins.entries.guard.config) config.plugins.entries.guard.config = {};
+    
+    // Save token
+    config.plugins.entries.guard.config.token = newToken;
+    writeFileSync(configPath, JSON.stringify(config, null, 2));
+    
+    console.log('[moltguard] Token saved to config');
+    console.log('[moltguard] View dashboard: https://guard.moltnet.ai/dashboard?token=' + newToken);
+    
+    return newToken;
+  } catch (err) {
+    console.error('[moltguard] Failed to manage token:', err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
 
 // Risk classification for common tools
 const TOOL_RISK: Record<string, 'low' | 'medium' | 'high' | 'critical'> = {
@@ -251,22 +302,23 @@ function getToolRisk(toolName: string, params: Record<string, unknown>): 'low' |
 const register: PluginRegisterFn = (api: PluginAPI) => {
   const config = api.config.plugins?.entries?.guard?.config as MoltGuardConfig | undefined;
   
-  if (!config?.token) {
-    console.log('[moltguard] No token configured.');
-    console.log('[moltguard] 👉 Get your token: https://guard.moltnet.ai/signup');
-    console.log('[moltguard] Then add to config: plugins.entries.guard.config.token');
+  // Auto-generate token if not present
+  const token = config?.token || ensureToken(api);
+  
+  if (!token) {
+    console.log('[moltguard] Failed to initialize token');
     return;
   }
 
   const cfg: MoltGuardConfig = {
-    url: config.url || 'https://guard.moltnet.ai',
-    token: config.token,
-    agentName: config.agentName,
-    logThoughts: config.logThoughts ?? true,
-    gateHighRisk: config.gateHighRisk ?? true,
-    gateTools: config.gateTools ?? ['exec', 'message', 'write'],
-    pollCommands: config.pollCommands ?? true,
-    pollIntervalMs: config.pollIntervalMs ?? 5000,
+    url: config?.url || 'https://guard.moltnet.ai',
+    token: token,
+    agentName: config?.agentName,
+    logThoughts: config?.logThoughts ?? true,
+    gateHighRisk: config?.gateHighRisk ?? true,
+    gateTools: config?.gateTools ?? ['exec', 'message', 'write'],
+    pollCommands: config?.pollCommands ?? true,
+    pollIntervalMs: config?.pollIntervalMs ?? 5000,
   };
 
   const agentName = cfg.agentName || `clawdbot-${process.env.HOSTNAME || 'agent'}`;

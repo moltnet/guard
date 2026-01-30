@@ -161,7 +161,16 @@ const migrations = [
   'ALTER TABLE actions ADD COLUMN callback_url TEXT',
   'ALTER TABLE actions ADD COLUMN undo_action TEXT',
   'ALTER TABLE actions ADD COLUMN undone INTEGER DEFAULT 0',
-  'ALTER TABLE actions ADD COLUMN undone_at TEXT'
+  'ALTER TABLE actions ADD COLUMN undone_at TEXT',
+  // Token scoping
+  'ALTER TABLE actions ADD COLUMN user_token TEXT',
+  'ALTER TABLE traces ADD COLUMN user_token TEXT',
+  'ALTER TABLE agent_sessions ADD COLUMN user_token TEXT',
+  'ALTER TABLE agents ADD COLUMN user_token TEXT',
+  'ALTER TABLE commands ADD COLUMN user_token TEXT',
+  'CREATE INDEX IF NOT EXISTS idx_actions_token ON actions(user_token)',
+  'CREATE INDEX IF NOT EXISTS idx_traces_token ON traces(user_token)',
+  'CREATE INDEX IF NOT EXISTS idx_agents_token ON agents(user_token)',
 ];
 migrations.forEach(sql => { try { db.exec(sql); } catch(e) {} });
 
@@ -214,11 +223,36 @@ app.use('/api/scan', rateLimit);
 app.use('/api/compare', rateLimit);
 
 // Auth middleware
+// Token-based auth - accepts any mg_ prefixed token
 const authMiddleware = (req, res, next) => {
-  if (!API_KEY) return next();
-  const key = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '') || req.query.apiKey;
-  if (key === API_KEY) return next();
-  res.status(401).json({ error: 'Unauthorized' });
+  const key = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '') || req.query.apiKey || req.query.token;
+  
+  // If global API_KEY is set, check against it (admin mode)
+  if (API_KEY && key === API_KEY) {
+    req.userToken = 'admin';
+    return next();
+  }
+  
+  // Accept any valid mg_ token
+  if (key && key.startsWith('mg_') && key.length > 10) {
+    req.userToken = key;
+    return next();
+  }
+  
+  // For read-only endpoints, allow without auth but scope to token if provided
+  if (req.method === 'GET') {
+    req.userToken = key || null;
+    return next();
+  }
+  
+  res.status(401).json({ error: 'Valid token required. Token should start with mg_' });
+};
+
+// Optional auth - doesn't require token but captures it if present
+const optionalAuth = (req, res, next) => {
+  const key = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '') || req.query.apiKey || req.query.token;
+  req.userToken = key || null;
+  next();
 };
 
 // Telegram notification
@@ -568,7 +602,7 @@ app.get('/api/me', (req, res) => {
 // ============= AGENT MANAGEMENT =============
 
 // Register an agent
-app.post('/api/agents/register', (req, res) => {
+app.post('/api/agents/register', authMiddleware, (req, res) => {
   const { name, description, capabilities } = req.body;
   if (!name) return res.status(400).json({ error: 'name required' });
   
@@ -576,14 +610,14 @@ app.post('/api/agents/register', (req, res) => {
   const now = new Date().toISOString();
   
   db.prepare(`
-    INSERT INTO agents (id, name, description, registered_at, last_seen, capabilities)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, name, description || '', now, now, JSON.stringify(capabilities || []));
+    INSERT INTO agents (id, name, description, registered_at, last_seen, capabilities, user_token)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(id, name, description || '', now, now, JSON.stringify(capabilities || []), req.userToken || null);
   
   res.json({ 
     id, 
     name, 
-    apiKey: id, // Use agent ID as API key for simplicity
+    apiKey: id,
     message: 'Agent registered successfully'
   });
 });
@@ -629,7 +663,7 @@ app.patch('/api/agents/:id', authMiddleware, (req, res) => {
 // ============= SESSION MANAGEMENT =============
 
 // Start a session
-app.post('/api/sessions', (req, res) => {
+app.post('/api/sessions', authMiddleware, (req, res) => {
   const { agent, metadata } = req.body;
   if (!agent) return res.status(400).json({ error: 'agent required' });
   
@@ -637,9 +671,9 @@ app.post('/api/sessions', (req, res) => {
   const now = new Date().toISOString();
   
   db.prepare(`
-    INSERT INTO agent_sessions (id, agent, started_at, metadata)
-    VALUES (?, ?, ?, ?)
-  `).run(id, agent, now, JSON.stringify(metadata || {}));
+    INSERT INTO agent_sessions (id, agent, started_at, metadata, user_token)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(id, agent, now, JSON.stringify(metadata || {}), req.userToken || null);
   
   // Update agent last_seen
   db.prepare('UPDATE agents SET last_seen = ? WHERE name = ?').run(now, agent);
@@ -701,7 +735,7 @@ app.get('/api/sessions', (req, res) => {
 // ============= THOUGHT TRACES (MIND GRAPH) =============
 
 // Log a thought/reasoning step
-app.post('/api/traces', (req, res) => {
+app.post('/api/traces', authMiddleware, (req, res) => {
   const { sessionId, agent, type, title, content, parentId, metadata, durationMs } = req.body;
   if (!agent || !type) return res.status(400).json({ error: 'agent and type required' });
   
@@ -716,9 +750,9 @@ app.post('/api/traces', (req, res) => {
   }
   
   db.prepare(`
-    INSERT INTO traces (id, session_id, timestamp, agent, type, title, content, parent_id, depth, duration_ms, metadata)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, sessionId || null, now, agent, type, title || '', content || '', parentId || null, depth, durationMs || 0, JSON.stringify(metadata || {}));
+    INSERT INTO traces (id, session_id, timestamp, agent, type, title, content, parent_id, depth, duration_ms, metadata, user_token)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, sessionId || null, now, agent, type, title || '', content || '', parentId || null, depth, durationMs || 0, JSON.stringify(metadata || {}), req.userToken || null);
   
   // Update session thought count
   if (sessionId) {
@@ -1102,15 +1136,16 @@ app.post('/api/actions', authMiddleware, async (req, res) => {
   const finalStatus = status || 'executed';
   
   db.prepare(`
-    INSERT INTO actions (id, timestamp, session_id, agent, type, description, details, risk, status, context, reversible, callback_url, undo_action, cost_usd, tokens_in, tokens_out, duration_ms)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO actions (id, timestamp, session_id, agent, type, description, details, risk, status, context, reversible, callback_url, undo_action, cost_usd, tokens_in, tokens_out, duration_ms, user_token)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, timestamp, sessionId || null,
     agent || 'unknown', type || 'custom', description || 'No description',
     JSON.stringify(details || {}), finalRisk, finalStatus,
     JSON.stringify(context || {}), reversible ? 1 : 0,
     callbackUrl || null, undoAction ? JSON.stringify(undoAction) : null,
-    costUsd || 0, tokensIn || 0, tokensOut || 0, durationMs || 0
+    costUsd || 0, tokensIn || 0, tokensOut || 0, durationMs || 0,
+    req.userToken || null
   );
   
   // Notify on high-risk pending
@@ -1130,11 +1165,17 @@ app.post('/api/actions', authMiddleware, async (req, res) => {
 });
 
 // Get actions
-app.get('/api/actions', (req, res) => {
+app.get('/api/actions', optionalAuth, (req, res) => {
   const { limit = 100, agent, risk, status, session, search } = req.query;
   let sql = 'SELECT * FROM actions';
   const conditions = [];
   const params = [];
+  
+  // Filter by token if provided (scope to user's data)
+  if (req.userToken && req.userToken !== 'admin') {
+    conditions.push('user_token = ?');
+    params.push(req.userToken);
+  }
   
   if (agent) { conditions.push('agent = ?'); params.push(agent); }
   if (risk) { conditions.push('risk = ?'); params.push(risk); }
